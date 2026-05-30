@@ -80,7 +80,8 @@ public class TSTOPHttpApiHostModule : AbpModule
 
             PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
             {
-                serverBuilder.AddDevelopmentEncryptionAndSigningCertificate();
+                serverBuilder.AddDevelopmentEncryptionCertificate()
+                    .AddDevelopmentSigningCertificate();
                 serverBuilder.SetIssuer(new Uri(configuration["AuthServer:Authority"]!));
             });
         }
