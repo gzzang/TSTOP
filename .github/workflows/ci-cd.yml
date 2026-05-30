@@ -83,6 +83,7 @@ jobs:
       WEB_CONTAINER: ${{ vars.CD_WEB_CONTAINER || 'tstop-web' }}
       API_PORT: ${{ vars.CD_API_PORT || '8080' }}
       WEB_PORT: ${{ vars.CD_WEB_PORT || '80' }}
+      AuthServer__UseDevelopmentCertificates: true
 
     steps:
       - name: Checkout
