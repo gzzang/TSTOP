@@ -33,9 +33,6 @@ jobs:
       - name: Run .NET tests
         run: dotnet test TSTOP.slnx --configuration Release --no-build --verbosity minimal
 
-      - name: Publish API artifacts
-        run: dotnet publish src/TSTOP.HttpApi.Host/TSTOP.HttpApi.Host.csproj --configuration Release --output artifacts/api --no-build
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -47,6 +44,18 @@ jobs:
         run: |
           corepack enable
           corepack prepare yarn@1.22.22 --activate
+
+      - name: Install ABP CLI
+        run: |
+          dotnet tool install --tool-path ./.abp-tools Volo.Abp.Cli --version 10.4.0
+
+      - name: Restore ABP MVC libs
+        run: |
+          # Must run from solution root where TSTOP.abpsln is located.
+          ./.abp-tools/abp install-libs
+
+      - name: Publish API artifacts
+        run: dotnet publish src/TSTOP.HttpApi.Host/TSTOP.HttpApi.Host.csproj --configuration Release --output artifacts/api --no-build
 
       - name: Install Angular dependencies
         working-directory: angular
