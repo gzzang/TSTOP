@@ -71,6 +71,12 @@ public class TSTOPHttpApiHostModule : AbpModule
             });
         });
 
+        var useDevelopmentCertificates = configuration.GetValue<bool>("AuthServer:UseDevelopmentCertificates");
+        if (useDevelopmentCertificates && hostingEnvironment.IsProduction())
+        {
+            throw new InvalidOperationException("AuthServer:UseDevelopmentCertificates cannot be enabled in production.");
+        }
+
         if (!hostingEnvironment.IsDevelopment())
         {
             PreConfigure<AbpOpenIddictAspNetCoreOptions>(options =>
@@ -80,7 +86,15 @@ public class TSTOPHttpApiHostModule : AbpModule
 
             PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
             {
-                serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", configuration["AuthServer:CertificatePassPhrase"]!);
+                if (useDevelopmentCertificates)
+                {
+                    serverBuilder.AddDevelopmentEncryptionCertificate()
+                        .AddDevelopmentSigningCertificate();
+                }
+                else
+                {
+                    serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", configuration["AuthServer:CertificatePassPhrase"]!);
+                }
                 serverBuilder.SetIssuer(new Uri(configuration["AuthServer:Authority"]!));
             });
         }
