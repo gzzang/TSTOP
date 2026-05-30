@@ -47,11 +47,12 @@ jobs:
 
       - name: Install ABP CLI
         run: |
-          dotnet tool install --global Volo.Abp.Cli
-          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+          dotnet tool install --tool-path ./.abp-tools Volo.Abp.Cli --version 10.4.0
 
       - name: Restore ABP MVC libs
-        run: abp install-libs
+        run: |
+          # Must run from solution root where TSTOP.abpsln is located.
+          ./.abp-tools/abp install-libs
 
       - name: Publish API artifacts
         run: dotnet publish src/TSTOP.HttpApi.Host/TSTOP.HttpApi.Host.csproj --configuration Release --output artifacts/api --no-build
