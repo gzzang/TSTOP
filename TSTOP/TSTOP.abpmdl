@@ -1,0 +1,104 @@
+{
+  "template": "app",
+  "imports": {
+    "Volo.Abp.LeptonXLiteTheme": {
+      "version": "5.4.0",
+      "isInstalled": true,
+      "creationTime": "05/30/2026 00:59:05 +00:00"
+    },
+    "Volo.Abp.Account": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "05/30/2026 00:59:05 +00:00"
+    },
+    "Volo.Abp.OpenIddict": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "05/30/2026 00:59:05 +00:00"
+    },
+    "Volo.Abp.Identity": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "05/30/2026 00:59:05 +00:00"
+    },
+    "Volo.Abp.SettingManagement": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "05/30/2026 00:59:05 +00:00"
+    },
+    "Volo.Abp.PermissionManagement": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "05/30/2026 00:59:05 +00:00"
+    },
+    "Volo.Abp.FeatureManagement": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "05/30/2026 00:59:05 +00:00"
+    }
+  },
+  "folders": {
+    "items": {
+      "src": {},
+      "test": {}
+    }
+  },
+  "packages": {
+    "TSTOP.Application": {
+      "path": "src/TSTOP.Application/TSTOP.Application.abppkg",
+      "folder": "src"
+    },
+    "TSTOP.Application.Tests": {
+      "path": "test/TSTOP.Application.Tests/TSTOP.Application.Tests.abppkg",
+      "folder": "test"
+    },
+    "TSTOP.Domain.Shared": {
+      "path": "src/TSTOP.Domain.Shared/TSTOP.Domain.Shared.abppkg",
+      "folder": "src"
+    },
+    "TSTOP.Application.Contracts": {
+      "path": "src/TSTOP.Application.Contracts/TSTOP.Application.Contracts.abppkg",
+      "folder": "src"
+    },
+    "TSTOP.HttpApi": {
+      "path": "src/TSTOP.HttpApi/TSTOP.HttpApi.abppkg",
+      "folder": "src"
+    },
+    "TSTOP.HttpApi.Client": {
+      "path": "src/TSTOP.HttpApi.Client/TSTOP.HttpApi.Client.abppkg",
+      "folder": "src"
+    },
+    "TSTOP.EntityFrameworkCore.Tests": {
+      "path": "test/TSTOP.EntityFrameworkCore.Tests/TSTOP.EntityFrameworkCore.Tests.abppkg",
+      "folder": "test"
+    },
+    "TSTOP.EntityFrameworkCore": {
+      "path": "src/TSTOP.EntityFrameworkCore/TSTOP.EntityFrameworkCore.abppkg",
+      "folder": "src"
+    },
+    "TSTOP.TestBase": {
+      "path": "test/TSTOP.TestBase/TSTOP.TestBase.abppkg",
+      "folder": "test"
+    },
+    "TSTOP.Domain.Tests": {
+      "path": "test/TSTOP.Domain.Tests/TSTOP.Domain.Tests.abppkg",
+      "folder": "test"
+    },
+    "TSTOP.HttpApi.Client.ConsoleTestApp": {
+      "path": "test/TSTOP.HttpApi.Client.ConsoleTestApp/TSTOP.HttpApi.Client.ConsoleTestApp.abppkg",
+      "folder": "test"
+    },
+    "TSTOP.DbMigrator": {
+      "path": "src/TSTOP.DbMigrator/TSTOP.DbMigrator.abppkg",
+      "folder": "src"
+    },
+    "TSTOP.HttpApi.Host": {
+      "path": "src/TSTOP.HttpApi.Host/TSTOP.HttpApi.Host.abppkg",
+      "folder": "src"
+    },
+    "TSTOP.Domain": {
+      "path": "src/TSTOP.Domain/TSTOP.Domain.abppkg",
+      "folder": "src"
+    }
+  }
+}

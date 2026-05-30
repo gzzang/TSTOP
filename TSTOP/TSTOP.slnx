@@ -1,0 +1,23 @@
+<Solution>
+    <Configurations>
+        <Platform Name="Any CPU" />
+    </Configurations>
+    <Folder Name="/src/">
+        <Project Path="src/TSTOP.Domain/TSTOP.Domain.csproj" />
+        <Project Path="src/TSTOP.Application/TSTOP.Application.csproj" />
+        <Project Path="src/TSTOP.EntityFrameworkCore/TSTOP.EntityFrameworkCore.csproj" />
+        <Project Path="src/TSTOP.Domain.Shared/TSTOP.Domain.Shared.csproj" />
+        <Project Path="src/TSTOP.Application.Contracts/TSTOP.Application.Contracts.csproj" />
+        <Project Path="src/TSTOP.HttpApi/TSTOP.HttpApi.csproj" />
+        <Project Path="src/TSTOP.HttpApi.Client/TSTOP.HttpApi.Client.csproj" />
+        <Project Path="src/TSTOP.HttpApi.Host/TSTOP.HttpApi.Host.csproj" />
+        <Project Path="src/TSTOP.DbMigrator/TSTOP.DbMigrator.csproj" />
+    </Folder>
+    <Folder Name="/test/">
+        <Project Path="test/TSTOP.Application.Tests/TSTOP.Application.Tests.csproj" />
+        <Project Path="test/TSTOP.EntityFrameworkCore.Tests/TSTOP.EntityFrameworkCore.Tests.csproj" />
+        <Project Path="test/TSTOP.TestBase/TSTOP.TestBase.csproj" />
+        <Project Path="test/TSTOP.Domain.Tests/TSTOP.Domain.Tests.csproj" />
+        <Project Path="test/TSTOP.HttpApi.Client.ConsoleTestApp/TSTOP.HttpApi.Client.ConsoleTestApp.csproj" />
+    </Folder>
+</Solution>
