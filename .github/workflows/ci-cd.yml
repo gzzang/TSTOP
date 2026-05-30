@@ -147,7 +147,10 @@ jobs:
           }
 
           Remove-ContainerIfExists $env:API_CONTAINER
-          docker run -d --name $env:API_CONTAINER --restart unless-stopped -p "${env:API_PORT}:8080" $env:API_IMAGE | Out-Null
+          docker run -d --name $env:API_CONTAINER --restart unless-stopped -p "${env:API_PORT}:8080" `
+            -e "ASPNETCORE_ENVIRONMENT=Staging" `
+            -e "AuthServer__UseDevelopmentCertificates=true" `
+            $env:API_IMAGE | Out-Null
           if ($LASTEXITCODE -ne 0) {
             throw "Failed to start API container '$env:API_CONTAINER'."
           }
