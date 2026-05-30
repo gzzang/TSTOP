@@ -74,6 +74,9 @@ jobs:
     needs: ci
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     env:
+      HTTP_PROXY: http://127.0.0.1:7897
+      HTTPS_PROXY: http://127.0.0.1:7897
+      NO_PROXY: localhost,127.0.0.1
       API_IMAGE: ${{ vars.CD_API_IMAGE || 'tstop-api:latest' }}
       WEB_IMAGE: ${{ vars.CD_WEB_IMAGE || 'tstop-web:latest' }}
       API_CONTAINER: ${{ vars.CD_API_CONTAINER || 'tstop-api' }}
