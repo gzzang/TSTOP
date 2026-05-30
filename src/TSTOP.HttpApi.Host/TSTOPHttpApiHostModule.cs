@@ -72,6 +72,10 @@ public class TSTOPHttpApiHostModule : AbpModule
         });
 
         var useDevelopmentCertificates = configuration.GetValue<bool>("AuthServer:UseDevelopmentCertificates");
+        if (useDevelopmentCertificates && hostingEnvironment.IsProduction())
+        {
+            throw new InvalidOperationException("AuthServer:UseDevelopmentCertificates cannot be enabled in production.");
+        }
 
         if (!hostingEnvironment.IsDevelopment())
         {
