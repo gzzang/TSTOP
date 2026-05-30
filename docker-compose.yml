@@ -3,15 +3,15 @@ services:
     image: postgresql:18.4
     container_name: tstop-postgresql
     environment:
-      POSTGRES_DB: tstop
-      POSTGRES_USER: gzzang
+      POSTGRES_DB: ${POSTGRES_DB:-tstop}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     ports:
       - "5432:5432"
     volumes:
       - tstop-postgresql-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gzzang -d tstop"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -32,8 +32,6 @@ services:
     build:
       context: .
       dockerfile: src/TSTOP.HttpApi.Host/Dockerfile
-      args:
-        OPENIDDICT_CERT_PASSWORD: ${OPENIDDICT_CERT_PASSWORD:?OPENIDDICT_CERT_PASSWORD is required}
     container_name: tstop-http-api-host
     depends_on:
       postgresql:
@@ -41,11 +39,10 @@ services:
       db-migrator:
         condition: service_completed_successfully
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      App__SelfUrl: http://localhost:8080
-      AuthServer__Authority: http://localhost:8080
+      ASPNETCORE_ENVIRONMENT: Development
+      App__SelfUrl: ${APP_SELF_URL:-http://localhost:8080}
+      AuthServer__Authority: ${AUTH_SERVER_AUTHORITY:-http://localhost:8080}
       AuthServer__RequireHttpsMetadata: "false"
-      AuthServer__CertificatePassPhrase: ${OPENIDDICT_CERT_PASSWORD}
       ConnectionStrings__Default: ${TSTOP_CONNECTION_STRING:?TSTOP_CONNECTION_STRING is required}
     ports:
       - "8080:8080"
