@@ -61,6 +61,18 @@ The `test` folder contains the following test projects:
 
 Deploying an ABP application follows the same process as deploying any .NET or ASP.NET Core application. However, there are important considerations to keep in mind. For detailed guidance, refer to ABP's [deployment documentation](https://abp.io/docs/latest/Deployment/Index).
 
+### GitHub Actions CI/CD
+
+This repository includes `.github/workflows/ci-cd.yml`:
+
+* **CI** runs on pull requests and `main` pushes, then builds/tests both the .NET solution and Angular app.
+* **CD** runs after CI on `main` pushes and deploys artifacts to a self-hosted runner.
+
+For local-machine CD, configure these repository variables:
+
+* `CD_API_TARGET`: target folder for `TSTOP.HttpApi.Host` publish output.
+* `CD_WEB_TARGET`: target folder for Angular `dist` files.
+
 ### Additional resources
 
 
