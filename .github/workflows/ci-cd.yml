@@ -69,12 +69,22 @@ jobs:
           path: angular/dist
 
   cd:
-    name: Deploy to local runner
+    name: Deploy with Docker
     runs-on: self-hosted
     needs: ci
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    env:
+      API_IMAGE: ${{ vars.CD_API_IMAGE || 'tstop-api:latest' }}
+      WEB_IMAGE: ${{ vars.CD_WEB_IMAGE || 'tstop-web:latest' }}
+      API_CONTAINER: ${{ vars.CD_API_CONTAINER || 'tstop-api' }}
+      WEB_CONTAINER: ${{ vars.CD_WEB_CONTAINER || 'tstop-web' }}
+      API_PORT: ${{ vars.CD_API_PORT || '8080' }}
+      WEB_PORT: ${{ vars.CD_WEB_PORT || '80' }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download API artifact
         uses: actions/download-artifact@v4
         with:
@@ -87,24 +97,64 @@ jobs:
           name: angular-dist
           path: deploy/web
 
-      - name: Deploy artifacts
+      - name: Build Docker images
         shell: pwsh
-        env:
-          API_TARGET: ${{ vars.CD_API_TARGET }}
-          WEB_TARGET: ${{ vars.CD_WEB_TARGET }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:API_TARGET)) {
-            Write-Host 'CD_API_TARGET is not configured. Skipping API deployment.'
-          } else {
-            New-Item -ItemType Directory -Path $env:API_TARGET -Force | Out-Null
-            Copy-Item -Path "deploy/api/*" -Destination $env:API_TARGET -Recurse -Force
-            Write-Host "API deployed to $env:API_TARGET"
+          New-Item -ItemType Directory -Path "deploy/docker/api" -Force | Out-Null
+          Copy-Item -Path "deploy/api/*" -Destination "deploy/docker/api" -Recurse -Force
+          @'
+          FROM mcr.microsoft.com/dotnet/aspnet:10.0
+          WORKDIR /app
+          COPY . .
+          ENV ASPNETCORE_URLS=http://+:8080
+          EXPOSE 8080
+          ENTRYPOINT ["dotnet", "TSTOP.HttpApi.Host.dll"]
+          '@ | Set-Content -Path "deploy/docker/api/Dockerfile" -Encoding UTF8
+          docker build -t $env:API_IMAGE deploy/docker/api
+
+          New-Item -ItemType Directory -Path "deploy/docker/web/html" -Force | Out-Null
+          Copy-Item -Path "deploy/web/TSTOP/browser/*" -Destination "deploy/docker/web/html" -Recurse -Force
+          Copy-Item -Path "angular/dynamic-env.json" -Destination "deploy/docker/web/dynamic-env.json" -Force
+          Copy-Item -Path "angular/nginx.conf" -Destination "deploy/docker/web/nginx.conf" -Force
+          @'
+          FROM nginx:alpine
+          COPY html /usr/share/nginx/html
+          COPY dynamic-env.json /usr/share/nginx/html/dynamic-env.json
+          COPY nginx.conf /etc/nginx/conf.d/default.conf
+          EXPOSE 80
+          '@ | Set-Content -Path "deploy/docker/web/Dockerfile" -Encoding UTF8
+          docker build -t $env:WEB_IMAGE deploy/docker/web
+
+      - name: Deploy Docker containers
+        shell: pwsh
+        run: |
+          function Remove-ContainerIfExists([string]$containerName) {
+            $existingContainer = docker ps -a --format '{{.Names}}' | Where-Object { $_ -eq $containerName }
+            if ($existingContainer) {
+              docker rm -f $containerName | Out-Null
+            }
           }
 
-          if ([string]::IsNullOrWhiteSpace($env:WEB_TARGET)) {
-            Write-Host 'CD_WEB_TARGET is not configured. Skipping Angular deployment.'
-          } else {
-            New-Item -ItemType Directory -Path $env:WEB_TARGET -Force | Out-Null
-            Copy-Item -Path "deploy/web/*" -Destination $env:WEB_TARGET -Recurse -Force
-            Write-Host "Angular app deployed to $env:WEB_TARGET"
+          function Ensure-ContainerRunning([string]$containerName) {
+            $runningContainer = docker ps --format '{{.Names}}' | Where-Object { $_ -eq $containerName }
+            if (-not $runningContainer) {
+              throw "Container '$containerName' is not running after deployment."
+            }
           }
+
+          Remove-ContainerIfExists $env:API_CONTAINER
+          docker run -d --name $env:API_CONTAINER --restart unless-stopped -p "${env:API_PORT}:8080" $env:API_IMAGE | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to start API container '$env:API_CONTAINER'."
+          }
+          Ensure-ContainerRunning $env:API_CONTAINER
+
+          Remove-ContainerIfExists $env:WEB_CONTAINER
+          docker run -d --name $env:WEB_CONTAINER --restart unless-stopped -p "${env:WEB_PORT}:80" $env:WEB_IMAGE | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to start web container '$env:WEB_CONTAINER'."
+          }
+          Ensure-ContainerRunning $env:WEB_CONTAINER
+
+          Write-Host "API container '$env:API_CONTAINER' is running on port $env:API_PORT using image $env:API_IMAGE"
+          Write-Host "Web container '$env:WEB_CONTAINER' is running on port $env:WEB_PORT using image $env:WEB_IMAGE"
