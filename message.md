@@ -324,3 +324,114 @@ CD 由本地 self-hosted runner 执行，原因：
 - 后端 `.NET` 构建成功，测试命令可执行
 - 前端 Angular 可构建，lint/test 存在模板初始问题已记录
 - 所有过程、命令、错误与修复已完整记录在本文件
+
+---
+
+## 11. 目录结构调整：将 `TSTOP/` 子目录内容移到仓库根目录
+
+### 11.1 操作背景
+用户要求：
+- 将 `/tmp/workspace/gzzang/TSTOP/TSTOP` 中的内容整体移到仓库根目录 `/tmp/workspace/gzzang/TSTOP`
+- 并把该操作记录到文档
+- 完成后执行自动化 CI
+
+### 11.2 执行前确认
+执行命令：
+```bash
+cd /tmp/workspace/gzzang/TSTOP && git status --short && git ls-files | sed -n '1,120p'
+```
+结果：
+- 所有项目文件均位于 `TSTOP/` 子目录下（例如 `TSTOP.slnx`、`src/`、`angular/`、`test/`）
+
+### 11.3 执行目录移动
+执行命令：
+```bash
+cd /tmp/workspace/gzzang/TSTOP
+if [ -f test ] && [ -d TSTOP/test ]; then rm -f test; fi
+shopt -s dotglob
+mv TSTOP/* .
+rmdir TSTOP
+ls -1a | sed -n '1,120p'
+```
+说明：
+- 根目录原有一个占位文件 `test`，与子目录中的 `test/` 目录重名冲突
+- 先删除根目录占位文件 `test`，再执行整体移动
+
+移动后根目录结构（节选）：
+- `TSTOP.slnx`
+- `src/`
+- `angular/`
+- `test/`
+- `message.md`
+- 以及 `.abpignore/.cursor/.editorconfig/.gitignore` 等
+
+---
+
+## 12. 目录移动后自动化 CI 执行记录
+
+### 12.1 后端 CI
+1) 构建：
+```bash
+cd /tmp/workspace/gzzang/TSTOP && dotnet build TSTOP.slnx
+```
+结果：成功（0 Error）
+
+2) 测试：
+```bash
+cd /tmp/workspace/gzzang/TSTOP && dotnet test TSTOP.slnx --no-build
+```
+结果：命令成功；`TSTOP.EntityFrameworkCore.Tests` 通过 6 个测试；其余部分测试程序集提示 `No test is available`（模板初始结构现象）。
+
+### 12.2 前端 CI
+0) 依赖安装：
+```bash
+cd /tmp/workspace/gzzang/TSTOP/angular && yarn install --frozen-lockfile
+```
+结果：成功（`Already up-to-date`）
+
+1) Lint：
+```bash
+cd /tmp/workspace/gzzang/TSTOP/angular && yarn lint
+```
+结果：失败（2 个 ESLint 错误）
+- `footer.component.ts`：`@angular-eslint/component-selector`
+- `book.service.ts`：`@angular-eslint/prefer-inject`
+
+2) Build：
+```bash
+cd /tmp/workspace/gzzang/TSTOP/angular && yarn build
+```
+结果：成功（存在 1 个样式 budget warning）
+
+3) Test：
+```bash
+cd /tmp/workspace/gzzang/TSTOP/angular && yarn test --watch=false
+```
+结果：失败
+- `No tests found matching ...`（当前模板中无 `*.spec.ts`/`*.test.ts`）
+
+---
+
+## 13. 当前 CI 未全绿时需要的设置
+
+若要 CI 全部成功，建议最少做以下设置：
+
+1. **前端 lint 规则与模板代码对齐**
+   - 方案 A：按规则修改代码（selector 前缀、inject 写法）
+   - 方案 B：在 `.eslintrc.json` 调整对应规则（团队确认后执行）
+
+2. **前端测试基线**
+   - 至少增加一个可执行的 `*.spec.ts` 或 `*.test.ts`，避免 `ng test` 因“无测试文件”失败
+   - 或在 CI 中将“无测试文件”作为可接受状态（不推荐长期使用）
+
+3. **CI 环境依赖**
+   - Node + Yarn（先 `yarn install --frozen-lockfile`）
+   - .NET SDK 10.x（用于 `dotnet build/test`）
+
+4. **可选服务依赖（若后续集成测试启用）**
+   - PostgreSQL 18.4
+   - Redis 8.8
+
+结论：
+- 目录迁移已完成且后端 CI 可运行成功。
+- 当前阻塞 CI 全绿的主要点在前端 `lint` 规则冲突与“无测试文件”配置。
