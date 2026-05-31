@@ -108,8 +108,17 @@ jobs:
 
       - name: Deploy with Docker Compose
         shell: pwsh
-        run: docker compose up --build --remove-orphans -d
+        run: |
+          docker compose up --build --remove-orphans -d
+          if ($LASTEXITCODE -ne 0) {
+            throw "docker compose up failed with exit code $LASTEXITCODE."
+          }
 
       - name: Verify deployment
         shell: pwsh
         run: docker compose ps
+
+      - name: Remove .env file
+        if: always()
+        shell: pwsh
+        run: Remove-Item -Path ".env" -Force -ErrorAction SilentlyContinue
