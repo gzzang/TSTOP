@@ -1,0 +1,97 @@
+name: tstop
+services:
+  db-migrator:
+    build:
+      context: /tmp/workspace/gzzang/TSTOP
+      dockerfile: src/TSTOP.DbMigrator/Dockerfile
+    container_name: tstop-db-migrator
+    depends_on:
+      postgresql:
+        condition: service_healthy
+        required: true
+    environment:
+      ConnectionStrings__Default: Host=postgresql;Port=5432;Database=tstop;Username=test;******;
+    networks:
+      default: null
+    restart: "no"
+  http-api-host:
+    build:
+      context: /tmp/workspace/gzzang/TSTOP
+      dockerfile: src/TSTOP.HttpApi.Host/Dockerfile
+    container_name: tstop-http-api-host
+    depends_on:
+      db-migrator:
+        condition: service_completed_successfully
+        required: true
+      postgresql:
+        condition: service_healthy
+        required: true
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      App__SelfUrl: http://localhost:8080
+      AuthServer__Authority: http://localhost:8080
+      AuthServer__RequireHttpsMetadata: "false"
+      ConnectionStrings__Default: Host=postgresql;Port=5432;Database=tstop;Username=test;******;
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -f http://localhost:8080/health-status || exit 1
+      timeout: 5s
+      interval: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "8080"
+        protocol: tcp
+  postgresql:
+    container_name: tstop-postgresql
+    environment:
+      POSTGRES_DB: tstop
+      POSTGRES_PASSWORD: test
+      POSTGRES_USER: test
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      timeout: 5s
+      interval: 5s
+      retries: 20
+    image: postgres:18.4
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 5432
+        published: "5432"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: tstop-postgresql-data
+        target: /var/lib/postgresql
+        volume: {}
+  web:
+    build:
+      context: /tmp/workspace/gzzang/TSTOP/angular
+      dockerfile: Dockerfile
+    container_name: tstop-web
+    depends_on:
+      http-api-host:
+        condition: service_healthy
+        required: true
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 80
+        published: "80"
+        protocol: tcp
+networks:
+  default:
+    name: tstop_default
+volumes:
+  tstop-postgresql-data:
+    name: tstop_tstop-postgresql-data
