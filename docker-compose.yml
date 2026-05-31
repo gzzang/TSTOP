@@ -1,0 +1,51 @@
+services:
+  postgresql:
+    image: postgresql:18.4
+    container_name: tstop-postgresql
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tstop}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    ports:
+      - "5432:5432"
+    volumes:
+      - tstop-postgresql-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  db-migrator:
+    build:
+      context: .
+      dockerfile: src/TSTOP.DbMigrator/Dockerfile
+    container_name: tstop-db-migrator
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: ${TSTOP_CONNECTION_STRING:?TSTOP_CONNECTION_STRING is required}
+    restart: "no"
+
+  http-api-host:
+    build:
+      context: .
+      dockerfile: src/TSTOP.HttpApi.Host/Dockerfile
+    container_name: tstop-http-api-host
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      db-migrator:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      App__SelfUrl: ${APP_SELF_URL:-http://localhost:8080}
+      AuthServer__Authority: ${AUTH_SERVER_AUTHORITY:-http://localhost:8080}
+      AuthServer__RequireHttpsMetadata: "false"
+      ConnectionStrings__Default: ${TSTOP_CONNECTION_STRING:?TSTOP_CONNECTION_STRING is required}
+    ports:
+      - "8080:8080"
+
+volumes:
+  tstop-postgresql-data:
