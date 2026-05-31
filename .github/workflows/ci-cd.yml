@@ -94,10 +94,11 @@ jobs:
       - name: Write .env file
         shell: pwsh
         run: |
+          $containerConnectionString = "${{ secrets.TSTOP_CONNECTION_STRING }}" -replace '(?i)(Host|Server)=(localhost|127\.0\.0\.1)', '$1=postgresql'
           $envContent = @(
             "POSTGRES_USER=${{ secrets.POSTGRES_USER }}"
             "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}"
-            "TSTOP_CONNECTION_STRING=${{ secrets.TSTOP_CONNECTION_STRING }}"
+            "TSTOP_CONNECTION_STRING=$containerConnectionString"
             "APP_SELF_URL=${{ vars.APP_SELF_URL || 'http://localhost:8080' }}"
             "AUTH_SERVER_AUTHORITY=${{ vars.AUTH_SERVER_AUTHORITY || 'http://localhost:8080' }}"
             "ASPNETCORE_ENVIRONMENT=${{ vars.ASPNETCORE_ENVIRONMENT || 'Staging' }}"
@@ -117,6 +118,11 @@ jobs:
       - name: Verify deployment
         shell: pwsh
         run: docker compose ps
+
+      - name: Show service logs on failure
+        if: failure()
+        shell: pwsh
+        run: docker compose logs --no-color --tail=200 db-migrator postgresql http-api-host
 
       - name: Remove .env file
         if: always()
